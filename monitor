@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import requests
+import time
+import datetime
+import argparse
+
+def sleeptime(numsuf):
+    if not numsuf:
+        return 0
+    num_chars = []
+    suf_chars = []
+    i = 0
+    while i < len(numsuf) and numsuf[i] in set('.01234567890'):
+        num_chars.append(numsuf[i])
+        i += 1
+    while i < len(numsuf):
+        suf_chars.append(numsuf[i])
+        i += 1
+    num = float(''.join(num_chars))
+    suf = ''.join(suf_chars)
+    suf_fact = {'': 1, 's': 1, 'm': 60, 'h': 3600, 'd': 86400}[suf]
+    return num * suf_fact
+
+DATE_FMT = '%a, %d %b %Y %H:%M:%S %Z'
+
+def ifttt_key():
+    my_dir = os.path.dirname(__file__)
+    return open(os.path.join(my_dir, 'ifttt_key')).read().strip()
+
+def main():
+    my_dir = os.path.dirname(__file__)
+    logfile = open(os.path.join(my_dir, 'log.txt'), 'w')
+    curtime = datetime.datetime.utcnow()
+    curtime = curtime.replace(tzinfo=datetime.timezone.utc)
+    print('current time:', curtime.strftime(DATE_FMT), file=logfile)
+    lm_loc = os.path.join(my_dir, 'last-modified.txt')
+    fa_loc = os.path.join(my_dir, 'fire-at.txt')
+    fire_at = datetime.datetime.now()
+    if os.path.exists(fa_loc):
+        fire_at_str = open(fa_loc).read().strip()
+        fire_at = datetime.datetime.strptime(fire_at_str, DATE_FMT)
+    to_wait = fire_at - datetime.datetime.now() 
+    if to_wait > datetime.timedelta(0):
+        print('Waiting for ', to_wait, file=logfile)
+        return 0
+    mwra_loc = 'https://www.mwra.com/biobot/biobotdata.htm'
+    if os.path.exists(lm_loc):
+        last_modified = open(lm_loc).read().strip()
+    else:
+        mwra_req = requests.get(mwra_loc)
+        last_modified = mwra_req.headers['Last-Modified']
+    init_last_modified = last_modified
+    print('last known update: ', last_modified, file=logfile)
+    mwra_req = requests.get(mwra_loc)
+    last_modified = mwra_req.headers['Last-Modified']
+    print('actual last update: ', last_modified, file=logfile)
+    if last_modified != init_last_modified:
+        payload = ["New MWRA data"]
+        ifttt_req = requests.post(
+            'https://maker.ifttt.com/trigger/notify_send/'
+            'json/with/key/' + ifttt_key(),
+            json=payload
+        )
+        print('ifttt message: ', ifttt_req.text, file=logfile)
+        with open(lm_loc, 'w') as lm_file:
+            print(last_modified, file=lm_file)
+        with open(fa_loc, 'w') as fa_file:
+            lm_date = datetime.datetime.strptime(last_modified, DATE_FMT)
+            lm_date = lm_date.replace(tzinfo=datetime.timezone.utc)
+            fa_date = lm_date + datetime.timedelta(hours=22)
+            while fa_date.weekday() > 4:
+                fa_date += datetime.timedelta(hours=23)
+            print(fa_date.strftime(DATE_FMT), file=fa_file)
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

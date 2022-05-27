@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+
+import sys
+import datetime
+
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+import numpy as np
+
+import math
+import collections
+import statistics
+
+def get_data(infile):
+    heads = infile.readline().strip().split('\t')
+    series = []
+    for line in infile:
+        strvals = line.strip('\n').split('\t')
+        vals = [ strvals[0] ]
+        for sv in strvals[1:]:
+            if sv in ('', 'ND'):
+                vals.append(None)
+            else:
+                vals.append(int(sv))
+        vd = dict(zip(heads, vals))
+        date = datetime.date(*[int(v) for v in vd['Sample Date'].split('-')])
+        series.append({'Date': date, 
+                       'Southern': vd['Southern'], 
+                       'Northern': vd['Northern']})
+    dates = [ v['Date'] for v in series ]
+    northern = [ v['Northern'] for v in series ]
+    southern = [ v['Southern'] for v in series ]
+    return (dates, southern, northern)
+
+def log_moving_average(series, window_size=7):
+    window = collections.deque([None] * window_size, window_size)
+    out_di = {}
+    for date, value in series.items():
+        if value is None:
+            window.append(None)
+        else:
+            window.append(math.log(value))
+        if window.count(None) < window_size - 2:
+            out_val = math.exp(statistics.mean([v for v in window if v]))
+            out_di[date] = out_val
+        else:
+            out_di[date] = None
+    return out_di
+
+def main():
+    with open('MWRAData.tsv') as infile:
+        dates, southern, northern = get_data(infile)
+    log_sou = log_moving_average(dict(zip(dates, southern)))
+    log_nor = log_moving_average(dict(zip(dates, northern)))
+    if '--print-7day-avg' in sys.argv:
+        with open('7day-avg.tsv', 'w') as outfile:
+            print('Sample Date', 'Southern', 'Northern', sep='\t', file=outfile)
+            for date in dates:
+                print(date.year, date.month, date.day, 
+                      sep='-', file=outfile, end='\t')
+                print(log_sou[date], log_nor[date], file=outfile, sep='\t')
+    fig = Figure()
+    canvas = FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+    ax.semilogy(log_nor.keys(), log_nor.values(), color='#99c47e', 
+                label='Northern 7 day average',
+                alpha=0.75, linewidth=0.75)
+    ax.semilogy(log_sou.keys(), log_sou.values(), color='#f1a36f',
+                label='Southern 7 day average',
+                alpha=0.75, linewidth=0.75)
+    ax.set_ylabel('RNA copies/ml')
+    ax.set_title('DITP Viral RNA Signal by Date, log scale')
+    ax.grid(which='major')
+    ax.grid(which='minor', alpha=0.1)
+    ax.legend()
+    canvas.print_figure(open('mwra-7day_avg.png', 'wb'), dpi=600)
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
