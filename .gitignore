@@ -127,3 +127,17 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# specific to this project
+# This describes how long my cron job needs to sleep for,
+# it's not part of the record.
+fire-at.txt
+# This is my ifttt-key go get your own.
+ifttt-key
+# This describes when the MWRA page was last modified, also not 
+# part of the record.
+last-modified.txt
+# A debug output which should not be comitted.
+log.txt
+# The main figure.  I would commit this, but it's too blobby
+mwra-7day_avg.png
