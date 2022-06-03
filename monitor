@@ -27,8 +27,8 @@ def sleeptime(numsuf):
 DATE_FMT = '%a, %d %b %Y %H:%M:%S %Z'
 
 def ifttt_key():
-    my_dir = os.path.dirname(__file__)
-    return open(os.path.join(my_dir, 'ifttt_key')).read().strip()
+    my_dir = os.path.abspath(os.path.dirname(__file__))
+    return open(os.path.join(my_dir, 'ifttt-key')).read().strip()
 
 def main():
     my_dir = os.path.dirname(__file__)
