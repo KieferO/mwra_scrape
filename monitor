@@ -32,7 +32,7 @@ def ifttt_key():
 
 def main():
     my_dir = os.path.dirname(__file__)
-    logfile = open(os.path.join(my_dir, 'log.txt'), 'w')
+    logfile = open(os.path.join(my_dir, 'log.txt'), 'a')
     curtime = datetime.datetime.utcnow()
     curtime = curtime.replace(tzinfo=datetime.timezone.utc)
     print('current time:', curtime.strftime(DATE_FMT), file=logfile)
