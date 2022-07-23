@@ -53,13 +53,12 @@ def main():
         dates, southern, northern = get_data(infile)
     log_sou = log_moving_average(dict(zip(dates, southern)))
     log_nor = log_moving_average(dict(zip(dates, northern)))
-    if '--print-7day-avg' in sys.argv:
-        with open('7day-avg.tsv', 'w') as outfile:
-            print('Sample Date', 'Southern', 'Northern', sep='\t', file=outfile)
-            for date in dates:
-                print(date.year, date.month, date.day, 
-                      sep='-', file=outfile, end='\t')
-                print(log_sou[date], log_nor[date], file=outfile, sep='\t')
+    with open('7day-avg.tsv', 'w') as outfile:
+        print('Sample Date', 'Southern', 'Northern', sep='\t', file=outfile)
+        for date in dates:
+            print(date.year, date.month, date.day,
+                  sep='-', file=outfile, end='\t')
+            print(log_sou[date], log_nor[date], file=outfile, sep='\t')
     fig = Figure()
     canvas = FigureCanvas(fig)
     ax = fig.add_subplot(111)
