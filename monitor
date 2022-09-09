@@ -26,11 +26,21 @@ def sleeptime(numsuf):
 
 DATE_FMT = '%a, %d %b %Y %H:%M:%S %Z'
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--fire-now',
+        action='store_true',
+        help='Ignore fire-at.txt, just look now.'
+    )
+    return parser.parse_args()
+
 def ifttt_key():
     my_dir = os.path.abspath(os.path.dirname(__file__))
     return open(os.path.join(my_dir, 'ifttt-key')).read().strip()
 
 def main():
+    args = get_args()
     my_dir = os.path.dirname(__file__)
     logfile = open(os.path.join(my_dir, 'log.txt'), 'a')
     curtime = datetime.datetime.utcnow()
@@ -39,7 +49,7 @@ def main():
     lm_loc = os.path.join(my_dir, 'last-modified.txt')
     fa_loc = os.path.join(my_dir, 'fire-at.txt')
     fire_at = datetime.datetime.now()
-    if os.path.exists(fa_loc):
+    if not args.fire_now and os.path.exists(fa_loc):
         fire_at_str = open(fa_loc).read().strip()
         fire_at = datetime.datetime.strptime(fire_at_str, DATE_FMT)
     to_wait = fire_at - datetime.datetime.now() 
