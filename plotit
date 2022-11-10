@@ -24,14 +24,19 @@ def get_data(infile):
             else:
                 vals.append(int(sv))
         vd = dict(zip(heads, vals))
-        date = datetime.date(*[int(v) for v in vd['Sample Date'].split('-')])
+        date = datetime.date.fromisoformat(vd['Sample Date'])
         series.append({'Date': date, 
                        'Southern': vd['Southern'], 
-                       'Northern': vd['Northern']})
+                       'Northern': vd['Northern'],
+                       'Southern 7 day avg': vd['Southern 7 day avg'], 
+                       'Northern 7 day avg': vd['Northern 7 day avg'],
+                      })
     dates = [ v['Date'] for v in series ]
     northern = [ v['Northern'] for v in series ]
     southern = [ v['Southern'] for v in series ]
-    return (dates, southern, northern)
+    northern7da = [ v['Northern 7 day avg'] for v in series ]
+    southern7da = [ v['Southern 7 day avg'] for v in series ]
+    return (dates, southern, northern, southern7da, northern7da)
 
 def log_moving_average(series, window_size=7):
     window = collections.deque([None] * window_size, window_size)
@@ -50,15 +55,27 @@ def log_moving_average(series, window_size=7):
 
 def main():
     with open('MWRAData.tsv') as infile:
-        dates, southern, northern = get_data(infile)
+        dates, southern, northern, s7da, n7da = get_data(infile)
     log_sou = log_moving_average(dict(zip(dates, southern)))
     log_nor = log_moving_average(dict(zip(dates, northern)))
+    s7da = dict(zip(dates, s7da))
+    n7da = dict(zip(dates, n7da))
     with open('7day-avg.tsv', 'w') as outfile:
         print('Sample Date', 'Southern', 'Northern', sep='\t', file=outfile)
         for date in dates:
-            print(date.year, date.month, date.day,
-                  sep='-', file=outfile, end='\t')
+            print(str(date), file=outfile, end='\t')
             print(log_sou[date], log_nor[date], file=outfile, sep='\t')
+    with open('7day-diff.tsv', 'w') as outfile:
+        print('Sample Date', 'Southern', 'Northern', sep='\t', file=outfile)
+        for date in dates:
+            print(str(date), file=outfile, end='\t')
+            sdiff = None
+            if log_sou[date] and s7da[date]:
+                sdiff = log_sou[date] - s7da[date]
+            ndiff = None
+            if log_nor[date] and n7da[date]:
+                ndiff = log_nor[date] - n7da[date]
+            print(sdiff, ndiff, sep='\t', file=outfile)
     fig = Figure()
     canvas = FigureCanvas(fig)
     ax = fig.add_subplot(111)
