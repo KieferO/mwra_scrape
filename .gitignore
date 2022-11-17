@@ -141,3 +141,7 @@ last-modified.txt
 log.txt
 # The main figure.  I would commit this, but it's too blobby
 mwra-7day_avg.png
+# I use this script to upload the mwra-7day_avg.png.  Unless you 
+# also have my private aws key, you shouldn't worry your pretty 
+# little head about it.
+uploadit
