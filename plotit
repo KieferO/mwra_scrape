@@ -5,6 +5,7 @@ import datetime
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+import matplotlib.dates
 
 import numpy as np
 
@@ -89,6 +90,10 @@ def main():
     ax.set_title('DITP Viral RNA Signal by Date, log scale')
     ax.grid(which='major')
     ax.grid(which='minor', alpha=0.1)
+    ax.xaxis.set_major_formatter(matplotlib.dates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+    #ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y-%m'))
+    #for label in ax.get_xticklabels(which='major'):
+    #    label.set(rotation=30, horizontalalignment='right')
     ax.legend()
     canvas.print_figure(open('mwra-7day_avg.png', 'wb'), dpi=600)
     return 0
