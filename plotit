@@ -47,7 +47,7 @@ def log_moving_average(series, window_size=7):
             window.append(None)
         else:
             window.append(math.log(value))
-        if window.count(None) < window_size - 2:
+        if window.count(None) < window_size - 1:
             out_val = math.exp(statistics.mean([v for v in window if v]))
             out_di[date] = out_val
         else:
